@@ -268,6 +268,12 @@ img { display: block; }
 /* ---------- on-screen keyboard (phonetic Bulgarian) ---------- */
 .answer input { caret-color: transparent; cursor: pointer; }
 .answer input.typing { border-color: var(--purple); box-shadow: 0 0 0 5px var(--purple-soft); }
+/* Show/hide: the wrapper animates its row from 0fr to 1fr, so the buttons below slide down and back up. */
+.kbd-wrap { display: grid; grid-template-rows: 0fr; opacity: 0; margin-block: -8px; overflow: hidden; transition: grid-template-rows .3s cubic-bezier(.2,.8,.2,1), opacity .22s ease, margin .3s ease; }
+.kbd-wrap.open { grid-template-rows: 1fr; opacity: 1; margin-block: 0; }
+.kbd-wrap > .kbd { min-height: 0; transform: translateY(14px) scale(.98); transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+.kbd-wrap.open > .kbd { transform: none; }
+.qpic { transition: width .3s ease, height .3s ease, font-size .3s ease; }
 .kbd { background: var(--card); border-radius: 22px; box-shadow: var(--shadow-s); padding: 8px 6px; display: flex; flex-direction: column; gap: 6px; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 .krow { display: flex; gap: 4px; justify-content: center; }
 .key { flex: 1 1 0; min-width: 0; min-height: 46px; border-radius: 11px; background: var(--bg); font-size: 20px; font-weight: 800; text-transform: uppercase; box-shadow: 0 2px 0 #DCD6F0; transition: transform .06s; }
@@ -279,7 +285,6 @@ img { display: block; }
 body.kbd-open .qpic { width: 76px; height: 76px; font-size: 40px; }
 body.kbd-open .qimg svg { max-height: 100px; }
 body.kbd-open .land-foot { display: none; }
-body.kbd-open .answer { gap: 10px; }
 
 /* ---------- mistakes to review ---------- */
 .count { margin-left: auto; min-width: 28px; height: 28px; padding: 0 9px; border-radius: var(--pill); background: var(--coral); color: #fff; font-size: 14px; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
@@ -426,7 +431,7 @@ body.kbd-open .answer { gap: 10px; }
     <div class="hints" id="hints"></div>
     <form class="answer" id="form" autocomplete="off">
       <input id="ans" name="ans" type="text" inputmode="none" readonly placeholder="Напиши тук…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" lang="bg" aria-label="Твоят отговор">
-      <div class="kbd" id="kbd" hidden role="group" aria-label="Клавиатура"></div>
+      <div class="kbd-wrap" id="kbdWrap" aria-hidden="true"><div class="kbd" id="kbd" role="group" aria-label="Клавиатура"></div></div>
       <div class="row">
         <button type="button" class="btn purple" id="joker"><svg style="color:var(--sun)"><use href="#i-bulb"/></svg>Жокер</button>
         <button type="submit" class="btn" id="check">Провери</button>
@@ -899,7 +904,9 @@ function renderKbd() {
       + `<div class="krow">${key(",")}${key("0")}${key("back", "⌫", "act")}${key("hide", "⌄", "act")}</div>`
     : type === "mixed" ? `<div class="krow">${[..."1234567890"].map(c => key(c)).join("")}</div>` + letters
     : letters;
-  el.hidden = !kbdOpen;
+  $("kbdWrap").classList.toggle("open", kbdOpen);
+  $("kbdWrap").setAttribute("aria-hidden", String(!kbdOpen));
+  el.querySelectorAll("button").forEach(b => b.tabIndex = kbdOpen ? 0 : -1);
   document.body.classList.toggle("kbd-open", kbdOpen);
   $("ans").classList.toggle("typing", kbdOpen);
 }
@@ -911,7 +918,7 @@ function press(k) {
   if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
 }
 $("kbd").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) press(b.dataset.k); });
-$("ans").addEventListener("click", () => { if (!kbdOpen) { kbdOpen = true; renderKbd(); $("form").scrollIntoView({ block: "end", behavior: "smooth" }); } });
+$("ans").addEventListener("click", () => { if (!kbdOpen) { kbdOpen = true; renderKbd(); setTimeout(() => $("form").scrollIntoView({ block: "end", behavior: "smooth" }), 320); } });
 // A real keyboard works too (Latin letters as phonetic Cyrillic, Enter = Провери).
 document.addEventListener("keydown", e => {
   if ($("quiz").hidden || !$("fb").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
