@@ -29,7 +29,7 @@ html, body { height: 100%; }
 body { background: var(--bg); color: var(--ink); font-family: var(--f); font-size: 16px; font-weight: 700;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   -webkit-tap-highlight-color: transparent; }
-.app { max-width: 420px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; padding-block: 14px 20px; position: relative; }
+.app { max-width: 420px; margin: 0 auto; min-height: 100%; min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; padding-block: 14px 20px; position: relative; }
 .screen { display: flex; flex-direction: column; gap: 18px; flex: 1; position: relative; }
 h1, h2, h3 { margin: 0; font-weight: 900; text-wrap: balance; }
 p { margin: 0; }
@@ -265,6 +265,27 @@ img { display: block; }
 .ttile .pct { font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
 .ttile .pct.none { color: var(--muted); font-size: 14px; font-weight: 800; }
 
+/* ---------- mistakes to review ---------- */
+.count { margin-left: auto; min-width: 28px; height: 28px; padding: 0 9px; border-radius: var(--pill); background: var(--coral); color: #fff; font-size: 14px; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.review { display: flex; flex-direction: column; gap: 12px; }
+.ritem { border-radius: 20px; background: var(--bg); padding: 14px; display: flex; flex-direction: column; gap: 8px; transition: opacity .3s, transform .3s; }
+.ritem.gone { opacity: 0; transform: translateX(40px); }
+.ritem .rq { display: flex; gap: 12px; align-items: flex-start; }
+.ritem .rpic { width: 46px; height: 46px; border-radius: 50%; background: var(--card); display: grid; place-items: center; font-size: 26px; line-height: 1; flex: none; overflow: hidden; }
+.ritem .rpic svg { width: 40px; height: auto; }
+.ritem .rq b { font-size: 16px; line-height: 1.3; }
+.ritem .mine { font-size: 14px; color: #9A3A22; }
+.ritem .mine s { text-decoration-thickness: 2px; }
+.ritem .right { font-size: 15px; }
+.ritem .right b { background: #CDEFD7; color: #17693A; padding: 2px 10px; border-radius: 10px; }
+.ritem .ex { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.ritem .foot { display: flex; align-items: center; gap: 10px; }
+.ritem .meta { flex: 1; font-size: 12px; color: var(--muted); }
+.ritem .got { min-height: 44px; padding: 0 18px; border-radius: var(--pill); background: var(--leaf); color: #fff; font-weight: 900; }
+.review .empty { text-align: center; color: var(--muted); font-size: 14px; padding: 6px 0; }
+.nav button { position: relative; }
+.nbadge { position: absolute; top: 0; right: 8px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--pill); background: var(--coral); color: #fff; font-size: 12px; font-weight: 900; display: grid; place-items: center; }
+
 /* ---------- question picture ---------- */
 .qpic { width: 120px; height: 120px; border-radius: 50%; background: var(--card); box-shadow: var(--shadow); display: grid; place-items: center; font-size: 64px; line-height: 1; margin: 0 auto; }
 
@@ -369,7 +390,7 @@ img { display: block; }
     <div class="topic-grid" id="topicGrid"></div>
     <nav class="nav" aria-label="Меню">
       <button aria-current="page"><svg><use href="#i-home"/></svg>Начало</button>
-      <button data-go="progress"><svg><use href="#i-chart"/></svg>Прогрес</button>
+      <button data-go="progress"><svg><use href="#i-chart"/></svg>Прогрес<span class="nbadge" id="navBadge" hidden></span></button>
       <button data-go="start"><svg><use href="#i-user"/></svg>Профил</button>
     </nav>
   </section>
@@ -388,7 +409,7 @@ img { display: block; }
     <p class="qtext" id="qtext">…</p>
     <div class="hints" id="hints"></div>
     <form class="answer" id="form" autocomplete="off">
-      <input id="ans" name="ans" type="text" enterkeyhint="done" placeholder="Напиши тук…" autocapitalize="off" spellcheck="false" aria-label="Твоят отговор">
+      <input id="ans" name="ans" type="text" inputmode="text" enterkeyhint="go" placeholder="Напиши тук…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" lang="bg" aria-label="Твоят отговор">
       <div class="row">
         <button type="button" class="btn purple" id="joker"><svg style="color:var(--sun)"><use href="#i-bulb"/></svg>Жокер</button>
         <button type="submit" class="btn" id="check">Провери</button>
@@ -413,6 +434,10 @@ img { display: block; }
       </div>
       <h3 style="color:var(--ink)">Моите теми</h3>
       <div class="tiles" id="tiles"></div>
+    </div>
+    <div class="block">
+      <h3><svg style="color:var(--sun)"><use href="#i-bulb"/></svg>Да прегледам<span class="count" id="reviewCount" hidden></span></h3>
+      <div class="review" id="review"></div>
     </div>
     <div class="block">
       <h3><svg><use href="#i-target"/></svg>Какво да упражниш</h3>
@@ -724,7 +749,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 function load(k, d) { try { const v = localStorage.getItem("pu2." + k); return v === null ? d : JSON.parse(v); } catch { return d; } }
 function save(k, v) { try { localStorage.setItem("pu2." + k, JSON.stringify(v)); } catch {} }
 let kid = null, st = null;
-function freshStats() { return { best: 0, total: 0, level: 1, topics: {}, days: [], jokers: 3, jokerDay: today() }; }
+function freshStats() { return { best: 0, total: 0, level: 1, topics: {}, days: [], jokers: 3, jokerDay: today(), mistakes: [] }; }
 function openKid(k) {
   kid = k; st = load("kid." + k.id, freshStats());
   if (st.jokerDay !== today()) { st.jokers = 3; st.jokerDay = today(); }
@@ -737,7 +762,7 @@ const SCREENS = ["start", "home", "quiz", "progress"];
 function show(id) {
   for (const s of SCREENS) $(s).hidden = s !== id;
   window.scrollTo(0, 0);
-  if (id === "home") paintHome();
+  if (id === "home") { paintHome(); paintBadge(); }
   if (id === "progress") paintProgress();
 }
 document.addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (b) show(b.dataset.go); });
@@ -820,6 +845,9 @@ function ask() {
   $("qimg").hidden = !pic;
   $("qimg").innerHTML = pic.startsWith("svg:") ? IMG[pic.slice(4)] : pic ? `<div class="qpic" aria-hidden="true">${pic}</div>` : "";
   $("qtext").textContent = cur.q; $("hints").innerHTML = "";
+  // Number questions open the number keypad; everything else the letter keyboard.
+  $("ans").inputMode = cur.num ? "decimal" : "text";
+  $("ans").placeholder = cur.num ? "Напиши число…" : "Напиши тук…";
   $("ans").value = ""; paintQuizTop();
   setTimeout(() => $("ans").focus({ preventScroll: true }), 50);
 }
@@ -860,7 +888,8 @@ $("form").onsubmit = e => {
     const p = $("streakPill"); p.classList.remove("bump"); void p.offsetWidth; p.classList.add("bump");
     feedback(r.exact ? "ok" : "typo");
   } else {
-    streak = 0; st.level = Math.max(1, st.level - 1); saveKid(); paintQuizTop();
+    streak = 0; st.level = Math.max(1, st.level - 1);
+    addMistake(cur, $("ans").value); saveKid(); paintQuizTop();
     feedback(r.trap ? "near" : "bad");
   }
 };
@@ -905,7 +934,41 @@ $("fb").addEventListener("click", e => {
 
 // ---------- progress ----------
 const SAMPLE = { best: 12, total: 62, level: 3, topics: { space: { seen: 50, ok: 31, wrong: 19 }, bg: { seen: 44, ok: 18, wrong: 26 }, body: { seen: 24, ok: 6, wrong: 18 }, priroda: { seen: 30, ok: 24, wrong: 6 } } };
+// Mistakes to review: a wrong answer goes to the top of the list; „Разбрах“ removes it.
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function addMistake(item, wrote) {
+  st.mistakes = (st.mistakes || []).filter(m => m.id !== item.id);
+  st.mistakes.unshift({ id: item.id, wrote: wrote.trim().slice(0, 60), at: today() });
+}
+function paintBadge() {
+  const n = kid && st ? (st.mistakes || []).length : 0;
+  $("navBadge").hidden = !n; $("navBadge").textContent = n;
+}
+function picHtml(item) {
+  const pic = item.pic || "";
+  return pic.startsWith("svg:") ? IMG[pic.slice(4)] : esc(pic);
+}
+function paintReview() {
+  const list = (st.mistakes || []).map(m => ({ m, q: BANK.find(b => b.id === m.id) })).filter(x => x.q);
+  $("reviewCount").hidden = !list.length; $("reviewCount").textContent = list.length;
+  $("review").innerHTML = list.length ? list.map(({ m, q }) => `
+    <article class="ritem" data-id="${q.id}">
+      <div class="rq"><span class="rpic" aria-hidden="true">${picHtml(q)}</span><b>${esc(q.q)}</b></div>
+      ${m.wrote ? `<p class="mine">Ти написа: <s>${esc(m.wrote)}</s></p>` : ""}
+      <p class="right">Верният отговор: <b>${esc(display(q))}</b></p>
+      <p class="ex">${esc(q.ex)}</p>
+      <div class="foot"><span class="meta">${T[q.t].name} · ${q.g} клас</span><button class="got" data-got="${q.id}">Разбрах ✓</button></div>
+    </article>`).join("")
+    : `<p class="empty">Тук ще се събират въпросите, които объркаш, с верния отговор. Засега няма нищо за преглед. Браво!</p>`;
+}
+$("review").addEventListener("click", e => {
+  const b = e.target.closest("[data-got]"); if (!b) return;
+  b.closest(".ritem").classList.add("gone");
+  setTimeout(() => { st.mistakes = st.mistakes.filter(m => m.id !== b.dataset.got); saveKid(); paintReview(); paintBadge(); }, 300);
+});
+
 function paintProgress() {
+  paintReview();
   const played = Object.values(st.topics).some(t => t.seen);
   const s = played ? st : { ...st, ...SAMPLE };
   $("sampleNote").hidden = played;
