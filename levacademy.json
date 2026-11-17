@@ -1,0 +1,11 @@
+{
+  "id": "porasni-umen",
+  "name": "Порасни умен",
+  "description": "Въпроси по обща култура за твоя клас: отговаряш с думи и гониш най-дългата серия верни отговори.",
+  "icon": "icon.svg",
+  "route": "porasni-umen",
+  "grades": [1, 2, 3, 4],
+  "contract": 2,
+  "permissions": ["user", "settings", "storage", "badges"],
+  "entry": "academy-app.js"
+}

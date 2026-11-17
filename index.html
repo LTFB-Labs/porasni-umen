@@ -29,10 +29,12 @@
   --spring: cubic-bezier(.2, 1.4, .4, 1);
 }
 *, *::before, *::after { box-sizing: border-box; }
-html, body { height: 100%; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
 body { background: linear-gradient(var(--bg1), var(--bg2)) fixed; color: var(--ink); font-family: var(--f); font-size: 16px; font-weight: 700;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
+  -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; overscroll-behavior: none;
+  font-feature-settings: "locl" 0; /* print letters as in the textbooks, not the cursive-like forms the font uses for lang=bg */ }
 .app { max-width: 430px; margin: 0 auto; min-height: 100%; min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; padding-block: 14px 14px; position: relative; z-index: 1; }
 .screen { display: flex; flex-direction: column; gap: 16px; flex: 1; position: relative; animation: screenIn .32s ease both; }
 @keyframes screenIn { from { opacity: 0; transform: translateY(14px); } }
@@ -339,6 +341,10 @@ button.bulbs-pill:active { transform: scale(.93); }
 .px-glow { animation: glow 1.2s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
 @keyframes glow { from { opacity: .55; transform: scale(.9); } to { opacity: 1; transform: scale(1.08); } }
 
+.has-child .nav [data-go="start"], .has-child .chev { display: none; }
+.has-child .me { cursor: default; }
+.calm *, .calm *::before, .calm *::after { animation: none !important; transition: none !important; }
+.calm .cf { opacity: 1; top: var(--rest, 20%); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .cf { opacity: 1; top: var(--rest, 20%); } }
 </style>
 
@@ -850,12 +856,21 @@ function check(item, raw) {
 }
 const display = item => checkAnswer(item.src, "").canonical;
 
-// ---------- storage (one profile per browser) ----------
+// ---------- platform: who plays and where the data is kept ----------
+// Opened alone, the game keeps one profile in this browser. Inside LevAcademy, academy-app.js passes `__platform`:
+// the child (name, grade) and the storage come from the shell, and there is no profile screen.
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const today = () => new Date().toISOString().slice(0, 10);
-function load(k, d) { try { const v = localStorage.getItem("pu2." + k); return v === null ? d : JSON.parse(v); } catch { return d; } }
-function save(k, v) { try { localStorage.setItem("pu2." + k, JSON.stringify(v)); } catch {} }
+const platform = typeof __platform !== "undefined" ? __platform : {
+  child: null,
+  load(k, d) { try { const v = localStorage.getItem("pu2." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  save(k, v) { try { localStorage.setItem("pu2." + k, JSON.stringify(v)); } catch {} },
+  onStreak() {},
+};
+const load = (k, d) => platform.load(k, d), save = (k, v) => platform.save(k, v);
+if (platform.child) document.querySelector(".app").classList.add("has-child");
+if (platform.reducedMotion) document.documentElement.classList.add("calm");
 let kid = null, st = null;
 function freshStats() { return { best: 0, total: 0, level: 1, topics: {}, days: [], jokers: 3, jokerDay: today(), mistakes: [] }; }
 function openKid(k) {
@@ -873,13 +888,13 @@ function show(id) {
   if (id === "home") { paintHome(); paintBadge(); }
   if (id === "progress") paintProgress();
 }
-document.addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (b) show(b.dataset.go); });
+document.addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (b && !(b.dataset.go === "start" && platform.child)) show(b.dataset.go); });
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); }
 const bulbs = n => [0, 1, 2].map(i => `<svg class="bulb ${i < n ? "" : "off"}"><use href="#i-bulb"/></svg>`).join("");
 // Numbers count up instead of just appearing.
 function countTo(el, to) {
   const from = +el.textContent || 0, t0 = performance.now();
-  if (from === to || matchMedia("(prefers-reduced-motion: reduce)").matches) { el.textContent = to; return; }
+  if (from === to || platform.reducedMotion || matchMedia("(prefers-reduced-motion: reduce)").matches) { el.textContent = to; return; }
   const step = t => { const p = Math.min(1, (t - t0) / 500); el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
@@ -916,6 +931,7 @@ $("profileForm").onsubmit = e => {
   save("profile", draft); openProfile(); show("home");
 };
 function openProfile() {
+  if (platform.child) return openKid({ id: "me", name: platform.child.name, grade: Math.min(4, Math.max(1, platform.child.grade)), girl: false });
   const p = load("profile", draft);
   openKid({ id: "me", grade: p.grade ?? Math.min(4, Math.max(1, gradeFor(p.year))), girl: p.gender === "girl", profile: p });
 }
@@ -926,7 +942,7 @@ paintProfile();
 let topic = "all";
 const avail = id => BANK.filter(q => q.g <= kid.grade && (id === "all" || q.t === id)).length;
 function paintHome() {
-  $("meFace").innerHTML = face(); $("meName").textContent = `${kid.grade} клас`;
+  $("meFace").innerHTML = face(); $("meName").textContent = kid.name || `${kid.grade} клас`;
   $("bulbsHome").innerHTML = bulbs(st.jokers);
   $("allPux").innerHTML = pux("hi", { bow: kid.girl });
   for (const id of ["dBest", "dPoints", "dLevel"]) $(id).textContent = 0;
@@ -1070,7 +1086,7 @@ $("form").onsubmit = e => {
   if (r.correct) {
     streak++; st.level = Math.min(5, st.level + 1);
     if (streak > st.best) st.best = streak;
-    saveKid(); paintQuizTop();
+    saveKid(); paintQuizTop(); platform.onStreak(streak);
     const p = $("streakPill"); p.classList.remove("bump"); void p.offsetWidth; p.classList.add("bump");
     feedback(r.exact ? "ok" : "typo");
   } else {
@@ -1188,7 +1204,7 @@ function paintProgress() {
 }
 $("practice").addEventListener("click", e => { const b = e.target.closest("[data-practice]"); if (!b) return; topic = b.dataset.practice; startGame(); });
 
-if (load("profile", null)) { openProfile(); show("home"); } else show("start");
+if (platform.child || load("profile", null)) { openProfile(); show("home"); } else show("start");
 </script>
 
 </body>

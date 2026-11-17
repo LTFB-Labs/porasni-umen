@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Порасни умен"><defs>
+    <radialGradient id="pxBody" cx="38%" cy="30%" r="80%"><stop offset="0" stop-color="#FFEE8A"/><stop offset=".55" stop-color="#FFD02E"/><stop offset="1" stop-color="#FFB703"/></radialGradient>
+    <linearGradient id="pxCrown" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC233"/><stop offset="1" stop-color="#FF9200"/></linearGradient>
+  </defs><rect width="160" height="160" rx="36" fill="#E9E4FF"/><svg x="6" y="14" width="148" height="140" viewBox="50 52 140 132"><g>
+    
+    <g transform="translate(66 162) rotate(-150)"><g><ellipse cx="0" cy="-30" rx="14" ry="32" fill="#FFC21A"/><circle cx="0" cy="-56" r="13" fill="#FFD23F"/></g></g><g transform="translate(176 158) rotate(28)"><g><ellipse cx="0" cy="-30" rx="14" ry="32" fill="#FFC21A"/><circle cx="0" cy="-56" r="13" fill="#FFD23F"/></g></g>
+    <g fill="#FFC21A"><circle cx="184.0" cy="150.0" r="13"/><circle cx="179.1" cy="174.5" r="13"/><circle cx="165.3" cy="195.3" r="13"/><circle cx="144.5" cy="209.1" r="13"/><circle cx="120.0" cy="214.0" r="13"/><circle cx="95.5" cy="209.1" r="13"/><circle cx="74.7" cy="195.3" r="13"/><circle cx="60.9" cy="174.5" r="13"/><circle cx="56.0" cy="150.0" r="13"/><circle cx="60.9" cy="125.5" r="13"/><circle cx="74.7" cy="104.7" r="13"/><circle cx="95.5" cy="90.9" r="13"/><circle cx="120.0" cy="86.0" r="13"/><circle cx="144.5" cy="90.9" r="13"/><circle cx="165.3" cy="104.7" r="13"/><circle cx="179.1" cy="125.5" r="13"/></g>
+    <circle cx="120" cy="150" r="68" fill="url(#pxBody)"/>
+    <path d="M102 90c-7-20-1-36 12-43-2 14 2 22 8 27 2-15 11-23 24-25-6 14-4 28-9 42Z" fill="#FFCB2B"/>
+    <ellipse cx="96" cy="112" rx="26" ry="14" fill="#fff" opacity=".28" transform="rotate(-24 96 112)"/>
+    <circle cx="70" cy="174" r="11" fill="#FF8F5E" opacity=".45"/><circle cx="170" cy="174" r="11" fill="#FF8F5E" opacity=".45"/>
+    <circle cx="90" cy="142" r="25" fill="#fff"/><circle cx="150" cy="142" r="25" fill="#fff"/><g><circle cx="93" cy="144" r="12.5" fill="#2B2D5C"/><circle cx="89" cy="139" r="4.6" fill="#fff"/><circle cx="97.5" cy="148" r="2" fill="#fff" opacity=".8"/></g><g><circle cx="147" cy="144" r="12.5" fill="#2B2D5C"/><circle cx="143" cy="139" r="4.6" fill="#fff"/><circle cx="151.5" cy="148" r="2" fill="#fff" opacity=".8"/></g><g fill="none" stroke="#5B45D6" stroke-width="7" stroke-linecap="round"><circle cx="90" cy="142" r="25"/><circle cx="150" cy="142" r="25"/><path d="M115 139q5-6 10 0M65 138l-12-5M175 138l12-5"/></g>
+    <ellipse cx="120" cy="166" rx="8" ry="5.5" fill="#FF7A3D"/>
+    <path d="M102 176q18 30 36 0q-18 7-36 0Z" fill="#7B2D3A"/><path d="M111 190q9 7 18 0q-9-6-18 0Z" fill="#FF7A8A"/>
+  </g></svg></svg>
