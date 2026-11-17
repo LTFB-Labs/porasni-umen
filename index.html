@@ -267,12 +267,19 @@ img { display: block; }
 
 /* ---------- on-screen keyboard (phonetic Bulgarian) ---------- */
 .answer input { caret-color: transparent; cursor: pointer; }
-.answer input.typing { border-color: var(--purple); box-shadow: 0 0 0 5px var(--purple-soft); }
-/* Show/hide: the wrapper animates its row from 0fr to 1fr, so the buttons below slide down and back up. */
-.kbd-wrap { display: grid; grid-template-rows: 0fr; opacity: 0; margin-block: -8px; overflow: hidden; transition: grid-template-rows .3s cubic-bezier(.2,.8,.2,1), opacity .22s ease, margin .3s ease; }
-.kbd-wrap.open { grid-template-rows: 1fr; opacity: 1; margin-block: 0; }
-.kbd-wrap > .kbd { min-height: 0; transform: translateY(14px) scale(.98); transition: transform .3s cubic-bezier(.2,.8,.2,1); }
-.kbd-wrap.open > .kbd { transform: none; }
+.answer input { border-color: var(--purple); box-shadow: 0 0 0 5px var(--purple-soft); padding-right: 72px; }
+.field { position: relative; }
+.send { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 52px; height: 52px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; box-shadow: 0 6px 14px rgba(46,52,72,.25); transition: transform .1s; }
+.send:active { transform: translateY(-50%) scale(.92); }
+.send svg { width: 26px; height: 26px; }
+.joker-pill { cursor: pointer; transition: transform .1s; }
+.joker-pill:active { transform: scale(.94); }
+.ask { position: fixed; inset: 0; z-index: 12; display: grid; place-items: center; background: rgba(46,52,72,.35); padding: 16px; }
+.ask-card { width: 100%; max-width: 360px; background: var(--card); border-radius: 28px; padding: 24px 20px 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; box-shadow: var(--shadow); animation: pop .22s ease; }
+@keyframes pop { from { transform: scale(.92); opacity: 0; } }
+.ask h2 { font-size: 22px; line-height: 1.2; }
+.ask p { color: var(--muted); font-size: 15px; font-weight: 700; }
+.ask-bulbs svg { width: 34px; height: 34px; }
 .qpic { transition: width .3s ease, height .3s ease, font-size .3s ease; }
 .kbd { background: var(--card); border-radius: 22px; box-shadow: var(--shadow-s); padding: 8px 6px; display: flex; flex-direction: column; gap: 6px; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 .krow { display: flex; gap: 4px; justify-content: center; }
@@ -347,6 +354,7 @@ body.kbd-open .land-foot { display: none; }
   <symbol id="i-crown" viewBox="0 0 24 24"><path fill="currentColor" d="M3 8l4.5 3.5L12 4l4.5 7.5L21 8l-2 11H5Z"/></symbol>
   <symbol id="i-drop" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.5S5 10.2 5 15a7 7 0 0 0 14 0c0-4.8-7-12.5-7-12.5Z"/></symbol>
   <symbol id="i-people" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="8" cy="8" r="3.4"/><circle cx="16.5" cy="9" r="2.8"/><path d="M1.5 20c0-3.8 3-6 6.5-6s6.5 2.2 6.5 6Z"/><path d="M14 20c0-2-.6-3.6-1.7-4.8.9-.5 2-.8 3.2-.8 3 0 5.5 1.8 5.5 5.6Z"/></g></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><path fill="currentColor" d="m19.4 13 .1-1-.1-1 2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3.5h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6-.1 1 .1 1-2 1.6 2 3.4 2.4-1c.5.4 1.1.7 1.7 1l.4 2.5h4l.4-2.6c.6-.2 1.2-.6 1.7-1l2.4 1 2-3.4ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" transform="translate(-1 0)"/></symbol>
 </svg>
 
@@ -422,7 +430,7 @@ body.kbd-open .land-foot { display: none; }
       <button class="topbtn" id="quit" aria-label="Към началото"><svg><use href="#i-back"/></svg></button>
       <span class="pill streak-pill" id="streakPill" aria-live="polite"><svg><use href="#i-flame"/></svg><span id="streak">0</span>&nbsp;подред</span>
       <span class="spacer"></span>
-      <span class="pill" title="Жокери"><span class="bulbs" id="bulbsQuiz"></span></span>
+      <button type="button" class="pill joker-pill" id="jokerPill" title="Жокер" aria-label="Жокер – подсказка"><span class="bulbs" id="bulbsQuiz"></span></button>
     </div>
     <div class="tags"><span class="tag" id="qtag">Тема</span><span class="tag grade-tag" id="qgrade">3 клас</span></div>
     <div class="dots" id="qlevel" aria-label="Ниво"></div>
@@ -430,12 +438,11 @@ body.kbd-open .land-foot { display: none; }
     <p class="qtext" id="qtext">…</p>
     <div class="hints" id="hints"></div>
     <form class="answer" id="form" autocomplete="off">
-      <input id="ans" name="ans" type="text" inputmode="none" readonly placeholder="Напиши тук…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" lang="bg" aria-label="Твоят отговор">
-      <div class="kbd-wrap" id="kbdWrap" aria-hidden="true"><div class="kbd" id="kbd" role="group" aria-label="Клавиатура"></div></div>
-      <div class="row">
-        <button type="button" class="btn purple" id="joker"><svg style="color:var(--sun)"><use href="#i-bulb"/></svg>Жокер</button>
-        <button type="submit" class="btn" id="check">Провери</button>
+      <div class="field">
+        <input id="ans" name="ans" type="text" inputmode="none" readonly placeholder="Напиши тук…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" lang="bg" aria-label="Твоят отговор">
+        <button type="submit" class="send" id="check" aria-label="Провери"><svg><use href="#i-arrow"/></svg></button>
       </div>
+      <div class="kbd" id="kbd" role="group" aria-label="Клавиатура"></div>
     </form>
     <div class="land-foot" aria-hidden="true"><svg viewBox="0 0 400 90" preserveAspectRatio="none"><path d="M0 90 V50 L40 30 L70 45 L110 20 L150 50 L200 35 L250 55 L300 25 L350 48 L400 35 V90Z" fill="#E4DEFA"/><path d="M0 90 V70 C100 55 300 75 400 62 V90Z" fill="#DAD2F8"/></svg></div>
   </section>
@@ -485,6 +492,15 @@ body.kbd-open .land-foot { display: none; }
 
 <div class="fb" id="fb" hidden role="dialog" aria-modal="true" aria-labelledby="fbTitle">
   <div class="fb-card" id="fbCard"></div>
+</div>
+<div class="ask" id="ask" hidden role="dialog" aria-modal="true" aria-labelledby="askTitle">
+  <div class="ask-card">
+    <span class="bulbs ask-bulbs" id="askBulbs"></span>
+    <h2 id="askTitle">Наистина ли искаш да ползваш жокер?</h2>
+    <p id="askWhat"></p>
+    <button class="btn purple" id="askYes">Да, ползвам жокер</button>
+    <button class="btn link" id="askNo">Не</button>
+  </div>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -875,9 +891,22 @@ function ask() {
 function startGame() { streak = 0; show("quiz"); ask(); }
 $("quit").onclick = () => show("home");
 
-function useJoker() {
+// Joker: tap the bulbs at the top → confirm → next hint (first letter → letter boxes → clue).
+function askJoker() {
+  if (!$("fb").hidden) return;
   if (!st.jokers) return feedback("none");
   if (hintStep >= 3) return toast("Използва и трите подсказки за този въпрос.");
+  const what = hintStep === 0 ? (cur.num ? "Ще видиш между кои числа е отговорът." : "Ще видиш първата буква.")
+    : hintStep === 1 ? (cur.num ? "Ще видиш колко цифри има." : "Ще видиш колко букви има.")
+    : "Ще получиш подсказка с думи.";
+  $("askBulbs").innerHTML = bulbs(st.jokers);
+  $("askWhat").textContent = `${what} Остават ти ${st.jokers} за днес.`;
+  $("ask").hidden = false; $("askYes").focus({ preventScroll: true });
+}
+$("askYes").onclick = () => { $("ask").hidden = true; useJoker(); };
+$("askNo").onclick = () => { $("ask").hidden = true; };
+$("ask").addEventListener("click", e => { if (e.target === $("ask")) $("ask").hidden = true; });
+function useJoker() {
   st.jokers--; hintStep++; saveKid(); paintQuizTop();
   const target = cur.num ? String(cur.num.v).replace(".", ",") : display(cur);
   let html;
@@ -886,42 +915,35 @@ function useJoker() {
   else html = `<div class="hint-clue">${cur.hint}</div>`;
   $("hints").insertAdjacentHTML("beforeend", html);
 }
-$("joker").onclick = useJoker;
+$("jokerPill").onclick = askJoker;
 
-// ---------- on-screen keyboard: phonetic Bulgarian, opens under the field on tap ----------
+// ---------- on-screen keyboard: phonetic Bulgarian, always under the field ----------
 const ROWS = ["явертъуиопшщ", "асдфгхйклчю", "зьцжбнм"];
 const QWERTY = { q:"я", w:"в", e:"е", r:"р", t:"т", y:"ъ", u:"у", i:"и", o:"о", p:"п", "[":"ш", "]":"щ", a:"а", s:"с", d:"д", f:"ф", g:"г", h:"х", j:"й", k:"к", l:"л", "`":"ч", "\\":"ю", z:"з", x:"ь", c:"ц", v:"ж", b:"б", n:"н", m:"м" };
-let kbdOpen = false;
 const key = (k, label = k, cls = "") => `<button type="button" class="key ${cls}" data-k="${k}">${label}</button>`;
 // The keyboard follows the question's answer type: text = letters, number = digits, mixed = digits row + letters.
 function renderKbd() {
   const el = $("kbd"), type = cur ? cur.kb : "text";
   el.classList.toggle("num", type === "number");
   const letters = ROWS.map((r, i) => `<div class="krow">${[...r].map(c => key(c)).join("")}${i === 2 ? key("back", "⌫", "act wide") : ""}</div>`).join("")
-    + `<div class="krow">${key(" ", "интервал", "space")}${key("hide", "⌄", "act wide")}</div>`;
+    + `<div class="krow">${key(" ", "интервал", "space")}</div>`;
   el.innerHTML = type === "number"
     ? ["123", "456", "789"].map(r => `<div class="krow">${[...r].map(c => key(c)).join("")}</div>`).join("")
-      + `<div class="krow">${key(",")}${key("0")}${key("back", "⌫", "act")}${key("hide", "⌄", "act")}</div>`
+      + `<div class="krow">${key(",")}${key("0")}${key("back", "⌫", "act")}</div>`
     : type === "mixed" ? `<div class="krow">${[..."1234567890"].map(c => key(c)).join("")}</div>` + letters
     : letters;
-  $("kbdWrap").classList.toggle("open", kbdOpen);
-  $("kbdWrap").setAttribute("aria-hidden", String(!kbdOpen));
-  el.querySelectorAll("button").forEach(b => b.tabIndex = kbdOpen ? 0 : -1);
-  document.body.classList.toggle("kbd-open", kbdOpen);
-  $("ans").classList.toggle("typing", kbdOpen);
+  document.body.classList.add("kbd-open");
 }
 function press(k) {
   const a = $("ans");
   if (k === "back") a.value = a.value.slice(0, -1);
-  else if (k === "hide") { kbdOpen = false; renderKbd(); }
   else if (a.value.length < 40) a.value += k;
   if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
 }
 $("kbd").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) press(b.dataset.k); });
-$("ans").addEventListener("click", () => { if (!kbdOpen) { kbdOpen = true; renderKbd(); setTimeout(() => $("form").scrollIntoView({ block: "end", behavior: "smooth" }), 320); } });
 // A real keyboard works too (Latin letters as phonetic Cyrillic, Enter = Провери).
 document.addEventListener("keydown", e => {
-  if ($("quiz").hidden || !$("fb").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+  if ($("quiz").hidden || !$("fb").hidden || !$("ask").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === "Enter") { e.preventDefault(); $("form").requestSubmit(); return; }
   if (e.key === "Backspace") { e.preventDefault(); press("back"); return; }
   const k = e.key.toLowerCase(), c = QWERTY[k] || k;
@@ -978,7 +1000,7 @@ function feedback(kind) {
     star: `${CONF}<img class="pose" src="${POSE.star}" alt=""><h2 id="fbTitle" class="ribbon violet">Серия ${streak}!</h2>
            <div class="trio"><div><svg style="color:var(--coral)"><use href="#i-flame"/></svg><b>${streak}</b><small>подред</small></div><div><svg style="color:var(--sun)"><use href="#i-trophy"/></svg><b>${st.best}</b><small>рекорд</small></div><div><svg class="${st.jokers ? "bulb-on" : "bulb-off"}"><use href="#i-bulb"/></svg><b>${st.jokers}</b><small>жокера</small></div></div>
            <button class="btn purple" id="fbNext">Продължи</button><button class="btn link" id="fbHome">Към началото</button>`,
-    none: `<img class="pose" src="${POSE.none}" alt=""><h2 id="fbTitle">Нямаш жокери днес</h2><p class="sub">Утре пак 3</p><button class="btn" disabled><svg><use href="#i-bulb"/></svg>Жокер</button><button class="btn link" id="fbBack">Обратно към въпроса</button>`,
+    none: `<img class="pose" src="${POSE.none}" alt=""><h2 id="fbTitle">Нямаш жокери днес</h2><p class="sub">Утре пак 3</p><button class="btn" id="fbBack">Обратно към въпроса</button>`,
   };
   $("fbCard").innerHTML = `<div class="fb-inner">${views[kind]}</div>${scenery(kind)}`;
   const fb = $("fb"); fb.className = "fb " + ({ typo: "ok" }[kind] || kind); fb.hidden = false;
