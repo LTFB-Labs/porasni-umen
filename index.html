@@ -265,6 +265,15 @@ img { display: block; }
 .ttile .pct { font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
 .ttile .pct.none { color: var(--muted); font-size: 14px; font-weight: 800; }
 
+/* ---------- keyboard open (phones): the question screen fits above the keyboard ---------- */
+body.kb .app { min-height: 0; }
+body.kb #quiz { height: calc(var(--vvh, 100dvh) - 34px - env(safe-area-inset-top, 0px)); flex: none; overflow-y: auto; gap: 10px; }
+body.kb .qpic { width: 64px; height: 64px; font-size: 34px; }
+body.kb .qimg svg { max-height: 90px; }
+body.kb .qtext { font-size: 22px; }
+body.kb .land-foot { display: none; }
+body.kb .answer { gap: 10px; }
+
 /* ---------- mistakes to review ---------- */
 .count { margin-left: auto; min-width: 28px; height: 28px; padding: 0 9px; border-radius: var(--pill); background: var(--coral); color: #fff; font-size: 14px; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
 .review { display: flex; flex-direction: column; gap: 12px; }
@@ -866,6 +875,19 @@ function useJoker() {
   $("hints").insertAdjacentHTML("beforeend", html);
 }
 $("joker").onclick = useJoker;
+
+// On phones the keyboard covers the page; shrink the question screen to the visible area above it.
+const vv = window.visualViewport;
+function fitKeyboard() {
+  if (!vv) return;
+  const open = document.activeElement === $("ans") && vv.height < window.innerHeight - 120;
+  document.body.classList.toggle("kb", open);
+  document.documentElement.style.setProperty("--vvh", vv.height + "px");
+  if (open) window.scrollTo(0, 0);
+}
+if (vv) { vv.addEventListener("resize", fitKeyboard); vv.addEventListener("scroll", fitKeyboard); }
+$("ans").addEventListener("focus", () => setTimeout(fitKeyboard, 300));
+$("ans").addEventListener("blur", () => setTimeout(fitKeyboard, 100));
 
 function record(ok) {
   const tp = st.topics[cur.t] ||= { seen: 0, ok: 0, wrong: 0 };
